@@ -7,17 +7,26 @@ type TokenString={
 	token:string;
 };
 
+type TrainData={
+	 trainTimeTable:any;
+	 stationTimeTable:any;
+	 station:any;
+	 railway:any;
+	 trainInformation:any;
+	 railwayFare:any;
+};
+
 const inputToken:string = fs.readFileSync("/home/evakichi/token.json",'utf-8');
 const tokenString:TokenString = JSON.parse(inputToken);
-function getNextTrain(trainTimeTable:any,stationTimeTable:any,station:any,railway:any,trainInformation:any,railwayFare:any){
-	 console.log(trainTimeTable);
-	 console.log(stationTimeTable);
-	 console.log(station);
-	 console.log(railway);
-	 console.log(trainInformation);
-	 console.log(railwayFare);
+function getNextTrain(trainData:TrainData){
+	 console.log(trainData.trainTimeTable);
+	 console.log(trainData.stationTimeTable);
+	 console.log(trainData.station);
+	 console.log(trainData.railway);
+	 console.log(trainData.trainInformation);
+	 console.log(trainData.railwayFare);
 };
-function getRailwayFare(token:string,trainTimeTable:any,stationTimeTable:any,station:any,railway:any,trainInformation:any){
+function getRailwayFare(token:string,trainData:TrainData){
 	axis.get("https://api.odpt.org/api/v4/odpt:RailwayFare",
 		 {
 			 params: {
@@ -26,7 +35,8 @@ function getRailwayFare(token:string,trainTimeTable:any,stationTimeTable:any,sta
 			 }
 		 })
 		 .then((response)=>{
-			 getNextTrain(trainTimeTable,stationTimeTable,station,railway,trainInformation,response.data);
+			 trainData.railwayFare=response.data;
+			 getNextTrain(trainData);
 		 }
 		 )
 		 .catch((error) =>{
@@ -37,7 +47,7 @@ function getRailwayFare(token:string,trainTimeTable:any,stationTimeTable:any,sta
 			 //console.log("finish");
 		 });
 };
-function getTrainInformation(token:string,trainTimeTable:any,stationTimeTable:any,station:any,railway:any){
+function getTrainInformation(token:string,trainData:TrainData){
 	axis.get("https://api.odpt.org/api/v4/odpt:TrainInformation",
 		 {
 			 params: {
@@ -46,7 +56,8 @@ function getTrainInformation(token:string,trainTimeTable:any,stationTimeTable:an
 			 }
 		 })
 		 .then((response)=>{
-			 getRailwayFare(token,trainTimeTable,stationTimeTable,station,railway,response.data);
+			 trainData.trainInformation = response.data;
+			 getRailwayFare(token,trainData);
 		 }
 		 )
 		 .catch((error) =>{
@@ -57,7 +68,7 @@ function getTrainInformation(token:string,trainTimeTable:any,stationTimeTable:an
 			 //console.log("finish");
 		 });
 };
-function getRailway(token:string,trainTimeTable:any,stationTimeTable:any,station:any){
+function getRailway(token:string,trainData:TrainData){
 	axis.get("https://api.odpt.org/api/v4/odpt:Railway",
 		 {
 			 params: {
@@ -66,7 +77,8 @@ function getRailway(token:string,trainTimeTable:any,stationTimeTable:any,station
 			 }
 		 })
 		 .then((response)=>{
-			 getTrainInformation(token,trainTimeTable,stationTimeTable,station,response.data);
+			 trainData.railway = response.data;
+			 getTrainInformation(token,trainData);
 		 }
 		 )
 		 .catch((error) =>{
@@ -78,7 +90,7 @@ function getRailway(token:string,trainTimeTable:any,stationTimeTable:any,station
 		 });
 };
 
-function getStation(token:string,trainTimeTable:any,stationTimeTable:any){
+function getStation(token:string,trainData:TrainData){
 	axis.get("https://api.odpt.org/api/v4/odpt:Station",
 		 {
 			 params: {
@@ -87,7 +99,8 @@ function getStation(token:string,trainTimeTable:any,stationTimeTable:any){
 			 }
 		 })
 		 .then((response)=>{
-			 getRailway(token,trainTimeTable,stationTimeTable,response.data);
+			 trainData.station = response.data;
+			 getRailway(token,trainData);
 		 }
 		 )
 		 .catch((error) =>{
@@ -99,7 +112,7 @@ function getStation(token:string,trainTimeTable:any,stationTimeTable:any){
 		 });
 };
 
-function getStationTimeTable(token:string,trainTimeTable:any){
+function getStationTimeTable(token:string,trainData:TrainData){
 	axis.get("https://api.odpt.org/api/v4/odpt:StationTimetable",
 		 {
 			 params: {
@@ -108,7 +121,8 @@ function getStationTimeTable(token:string,trainTimeTable:any){
 			 }
 		 })
 		 .then((response)=>{
-			 getStation(token,trainTimeTable,response.data); 
+			 trainData.stationTimeTable = response.data;
+			 getStation(token,trainData); 
 		 }
 		 )
 		 .catch((error) =>{
@@ -120,7 +134,7 @@ function getStationTimeTable(token:string,trainTimeTable:any){
 		 });
 };
 
-function getTrainTimeTable(token:string){
+function getTrainTimeTable(token:string,trainData:TrainData){
 	axis.get("https://api.odpt.org/api/v4/odpt:TrainTimetable",
 		 {
 			 params: {
@@ -129,7 +143,8 @@ function getTrainTimeTable(token:string){
 			 }
 		 })
 		 .then((response)=>{
-			 getStationTimeTable(token,response.data); 
+			 trainData={trainTimeTable : response.data};
+			 getStationTimeTable(token,trainData); 
 		 }
 		 )
 		 .catch((error) =>{
@@ -141,4 +156,5 @@ function getTrainTimeTable(token:string){
 		 });
 };
 
-getTrainTimeTable(tokenString.token);
+let trainData: TrainData;
+getTrainTimeTable(tokenString.token,trainData);

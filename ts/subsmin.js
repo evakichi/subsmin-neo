@@ -4,16 +4,16 @@ var fs = require("fs");
 var axios_1 = require("axios");
 var inputToken = fs.readFileSync("/home/evakichi/token.json", 'utf-8');
 var tokenString = JSON.parse(inputToken);
-function getNextTrain(trainTimeTable, stationTimeTable, station, railway, trainInformation, railwayFare) {
-    console.log(trainTimeTable);
-    console.log(stationTimeTable);
-    console.log(station);
-    console.log(railway);
-    console.log(trainInformation);
-    console.log(railwayFare);
+function getNextTrain(trainData) {
+    console.log(trainData.trainTimeTable);
+    console.log(trainData.stationTimeTable);
+    console.log(trainData.station);
+    console.log(trainData.railway);
+    console.log(trainData.trainInformation);
+    console.log(trainData.railwayFare);
 }
 ;
-function getRailwayFare(token, trainTimeTable, stationTimeTable, station, railway, trainInformation) {
+function getRailwayFare(token, trainData) {
     axios_1.default.get("https://api.odpt.org/api/v4/odpt:RailwayFare", {
         params: {
             "odpt:operator": "odpt.Operator:MIR",
@@ -21,7 +21,8 @@ function getRailwayFare(token, trainTimeTable, stationTimeTable, station, railwa
         }
     })
         .then(function (response) {
-        getNextTrain(trainTimeTable, stationTimeTable, station, railway, trainInformation, response.data);
+        trainData.railwayFare = response.data;
+        getNextTrain(trainData);
     })
         .catch(function (error) {
         console.error("Fail");
@@ -32,7 +33,7 @@ function getRailwayFare(token, trainTimeTable, stationTimeTable, station, railwa
     });
 }
 ;
-function getTrainInformation(token, trainTimeTable, stationTimeTable, station, railway) {
+function getTrainInformation(token, trainData) {
     axios_1.default.get("https://api.odpt.org/api/v4/odpt:TrainInformation", {
         params: {
             "odpt:operator": "odpt.Operator:MIR",
@@ -40,7 +41,8 @@ function getTrainInformation(token, trainTimeTable, stationTimeTable, station, r
         }
     })
         .then(function (response) {
-        getRailwayFare(token, trainTimeTable, stationTimeTable, station, railway, response.data);
+        trainData.trainInformation = response.data;
+        getRailwayFare(token, trainData);
     })
         .catch(function (error) {
         console.error("Fail");
@@ -51,7 +53,7 @@ function getTrainInformation(token, trainTimeTable, stationTimeTable, station, r
     });
 }
 ;
-function getRailway(token, trainTimeTable, stationTimeTable, station) {
+function getRailway(token, trainData) {
     axios_1.default.get("https://api.odpt.org/api/v4/odpt:Railway", {
         params: {
             "odpt:operator": "odpt.Operator:MIR",
@@ -59,7 +61,8 @@ function getRailway(token, trainTimeTable, stationTimeTable, station) {
         }
     })
         .then(function (response) {
-        getTrainInformation(token, trainTimeTable, stationTimeTable, station, response.data);
+        trainData.railway = response.data;
+        getTrainInformation(token, trainData);
     })
         .catch(function (error) {
         console.error("Fail");
@@ -70,7 +73,7 @@ function getRailway(token, trainTimeTable, stationTimeTable, station) {
     });
 }
 ;
-function getStation(token, trainTimeTable, stationTimeTable) {
+function getStation(token, trainData) {
     axios_1.default.get("https://api.odpt.org/api/v4/odpt:Station", {
         params: {
             "odpt:operator": "odpt.Operator:MIR",
@@ -78,7 +81,8 @@ function getStation(token, trainTimeTable, stationTimeTable) {
         }
     })
         .then(function (response) {
-        getRailway(token, trainTimeTable, stationTimeTable, response.data);
+        trainData.station = response.data;
+        getRailway(token, trainData);
     })
         .catch(function (error) {
         console.error("Fail");
@@ -89,7 +93,7 @@ function getStation(token, trainTimeTable, stationTimeTable) {
     });
 }
 ;
-function getStationTimeTable(token, trainTimeTable) {
+function getStationTimeTable(token, trainData) {
     axios_1.default.get("https://api.odpt.org/api/v4/odpt:StationTimetable", {
         params: {
             "odpt:operator": "odpt.Operator:MIR",
@@ -97,7 +101,8 @@ function getStationTimeTable(token, trainTimeTable) {
         }
     })
         .then(function (response) {
-        getStation(token, trainTimeTable, response.data);
+        trainData.stationTimeTable = response.data;
+        getStation(token, trainData);
     })
         .catch(function (error) {
         console.error("Fail");
@@ -108,7 +113,7 @@ function getStationTimeTable(token, trainTimeTable) {
     });
 }
 ;
-function getTrainTimeTable(token) {
+function getTrainTimeTable(token, trainData) {
     axios_1.default.get("https://api.odpt.org/api/v4/odpt:TrainTimetable", {
         params: {
             "odpt:operator": "odpt.Operator:MIR",
@@ -116,7 +121,8 @@ function getTrainTimeTable(token) {
         }
     })
         .then(function (response) {
-        getStationTimeTable(token, response.data);
+        trainData = { trainTimeTable: response.data };
+        getStationTimeTable(token, trainData);
     })
         .catch(function (error) {
         console.error("Fail");
@@ -127,4 +133,5 @@ function getTrainTimeTable(token) {
     });
 }
 ;
-getTrainTimeTable(tokenString.token);
+var trainData;
+getTrainTimeTable(tokenString.token, trainData);
